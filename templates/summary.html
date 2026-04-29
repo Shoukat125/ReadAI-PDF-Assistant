@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en"><script>(function(){var t=localStorage.getItem('readai_theme')||'dark';document.documentElement.setAttribute('data-theme',t);})();</script>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ReadAI — Summary</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500;600&family=Lora:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root{--bg:#0f0e0c;--surface:#1a1916;--surface2:#222018;--border:#2e2c28;--gold:#c9a84c;--gold-light:#e8c97a;--text:#f0ece4;--text-muted:#8a8578;--success:#5cb85c;--error:#e05c5c;--radius:12px;}
+        [data-theme="light"]{--bg:#f5f2eb;--surface:#ffffff;--surface2:#ede9e0;--border:#d8d2c4;--gold:#a0722a;--gold-light:#c9942e;--text:#1e1c18;--text-muted:#6b6457;--success:#2d7a2d;--error:#c0392b;}
+        *{margin:0;padding:0;box-sizing:border-box;}
+        body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;}
+        .topnav{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+        .topnav-left{display:flex;align-items:center;gap:14px;}
+        .back-btn{color:var(--text-muted);text-decoration:none;font-size:13px;transition:color 0.2s;}
+        .back-btn:hover{color:var(--text);}
+        .book-info h2{font-family:'Playfair Display',serif;font-size:15px;}
+        .book-info p{font-size:11px;color:var(--text-muted);}
+        .topnav-right{display:flex;align-items:center;gap:6px;}
+        .btn-nav{padding:6px 12px;border-radius:8px;font-size:12px;font-weight:500;text-decoration:none;border:1px solid var(--border);background:transparent;color:var(--text-muted);transition:all 0.2s;cursor:pointer;font-family:'DM Sans',sans-serif;}
+        .btn-nav:hover{border-color:var(--gold);color:var(--gold);}
+        .layout{display:flex;min-height:calc(100vh - 53px);}
+        .left-panel{width:300px;border-right:1px solid var(--border);padding:20px;display:flex;flex-direction:column;gap:16px;}
+        .gen-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px;}
+        .gen-card h3{font-family:'Playfair Display',serif;font-size:15px;margin-bottom:14px;}
+        .form-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;}
+        .form-group label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:5px;}
+        .form-group input{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;outline:none;transition:border-color 0.2s;}
+        .form-group input:focus{border-color:var(--gold);}
+        .hint{font-size:11px;color:var(--text-muted);margin-bottom:12px;}
+        .btn-generate{width:100%;padding:10px;background:linear-gradient(135deg,var(--gold),var(--gold-light));border:none;border-radius:var(--radius);color:#0f0e0c;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:opacity 0.2s,transform 0.2s;}
+        .btn-generate:hover{opacity:0.9;transform:translateY(-1px);}
+        .btn-generate:disabled{opacity:0.5;cursor:not-allowed;transform:none;}
+        .history-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px;flex:1;overflow-y:auto;}
+        .history-card h3{font-family:'Playfair Display',serif;font-size:14px;margin-bottom:12px;}
+        .history-item{padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;cursor:pointer;transition:all 0.2s;margin-bottom:6px;}
+        .history-item:hover{border-color:var(--gold);}
+        .h-pages{font-size:11px;color:var(--gold);margin-bottom:3px;}
+        .h-preview{font-size:12px;color:var(--text-muted);overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
+        .h-date{font-size:10px;color:var(--text-muted);margin-top:5px;}
+        .empty-history{text-align:center;padding:20px;color:var(--text-muted);font-size:12px;}
+        .right-panel{flex:1;padding:28px;overflow-y:auto;}
+        .summary-display{max-width:680px;margin:0 auto;}
+        .placeholder{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:360px;text-align:center;color:var(--text-muted);gap:10px;}
+        .placeholder .ph-icon{font-size:48px;}
+        .placeholder h3{font-family:'Playfair Display',serif;font-size:20px;color:var(--text);}
+        .placeholder p{font-size:13px;max-width:280px;}
+        .loading-box{display:none;flex-direction:column;align-items:center;justify-content:center;min-height:360px;gap:14px;color:var(--text-muted);}
+        .loading-box.show{display:flex;}
+        .spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--gold);border-radius:50%;animation:spin 0.8s linear infinite;}
+        @keyframes spin{to{transform:rotate(360deg);}}
+        .summary-result{display:none;animation:fadeUp 0.4s ease;}
+        .summary-result.show{display:block;}
+        @keyframes fadeUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
+        .summary-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;padding-bottom:14px;border-bottom:1px solid var(--border);}
+        .summary-header h2{font-family:'Playfair Display',serif;font-size:20px;}
+        .page-range{font-size:12px;color:var(--gold);background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.25);padding:4px 12px;border-radius:20px;}
+        .summary-text{font-family:'Lora',serif;font-size:15px;line-height:1.9;color:var(--text);white-space:pre-wrap;}
+        .copy-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text-muted);font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer;margin-top:20px;transition:all 0.2s;}
+        .copy-btn:hover{border-color:var(--gold);color:var(--gold);}
+    </style>
+</head>
+<body>
+<nav class="topnav">
+    <div class="topnav-left">
+        <a href="/reader/{{ book[0] }}" class="back-btn">← Reader</a>
+        <div style="width:1px;height:18px;background:var(--border);"></div>
+        <div class="book-info">
+            <h2>{{ book[1] }}</h2>
+            <p>{{ book[3] or 'General' }} • {{ book[4] }} pages</p>
+        </div>
+    </div>
+    <div class="topnav-right">
+        <a href="/reader/{{ book[0] }}" class="btn-nav">📖 Read</a>
+        <button class="btn-nav" onclick="toggleTheme()" id="themeBtn">☀️</button>
+    </div>
+</nav>
+<div class="layout">
+    <div class="left-panel">
+        <div class="gen-card">
+            <h3>✨ Generate Summary</h3>
+            <div class="form-row">
+                <div class="form-group"><label>From Page</label><input type="number" id="pageFrom" min="1" max="{{ total_pages }}" value="1"></div>
+                <div class="form-group"><label>To Page</label><input type="number" id="pageTo" min="1" max="{{ total_pages }}" value="{{ [5, total_pages]|min }}"></div>
+            </div>
+            <p class="hint">📄 Total: {{ total_pages }} pages</p>
+            <button class="btn-generate" id="generateBtn" onclick="generateSummary()">📋 Generate Summary</button>
+        </div>
+        <div class="history-card">
+            <h3>🕒 Previous Summaries</h3>
+            {% if summaries %}
+                {% for s in summaries %}
+                <div class="history-item" 
+                     data-summary="{{ s[4]|e }}" 
+                     data-from="{{ s[2] }}" 
+                     data-to="{{ s[3] }}"
+                     onclick="showHistoryFromEl(this)">
+                    <div class="h-pages">Pages {{ s[2] }} — {{ s[3] }}</div>
+                    <div class="h-preview">{{ s[4][:80] }}...</div>
+                    <div class="h-date">{{ s[5][:10] if s[5] else '' }}</div>
+                </div>
+                {% endfor %}
+            {% else %}
+            <div class="empty-history">No summaries yet.<br>Generate your first one!</div>
+            {% endif %}
+        </div>
+    </div>
+    <div class="right-panel">
+        <div class="summary-display">
+            <div class="placeholder" id="placeholder">
+                <div class="ph-icon">📋</div>
+                <h3>Generate a Summary</h3>
+                <p>Select a page range and click Generate Summary.</p>
+            </div>
+            <div class="loading-box" id="loadingBox">
+                <div class="spinner"></div>
+                <p>Generating summary...</p>
+                <small style="font-size:12px;color:var(--text-muted);">This may take a few seconds ⏳</small>
+            </div>
+            <div class="summary-result" id="summaryResult">
+                <div class="summary-header">
+                    <h2>📋 Summary</h2>
+                    <span class="page-range" id="pageRangeLabel">Pages 1-5</span>
+                </div>
+                <div class="summary-text" id="summaryText"></div>
+                <button class="copy-btn" onclick="copySummary()">📋 Copy Summary</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    const BOOK_ID = {{ book[0] }};
+
+    async function generateSummary() {
+        const pf = parseInt(document.getElementById('pageFrom').value);
+        const pt = parseInt(document.getElementById('pageTo').value);
+        if (pf > pt) { alert('From page must be less than To page!'); return; }
+        document.getElementById('placeholder').style.display = 'none';
+        document.getElementById('summaryResult').classList.remove('show');
+        document.getElementById('loadingBox').classList.add('show');
+        document.getElementById('generateBtn').disabled = true;
+        try {
+            const res = await fetch('/api/generate-summary', {
+                method: 'POST', headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({book_id: BOOK_ID, page_from: pf, page_to: pt})
+            });
+            const data = await res.json();
+            document.getElementById('loadingBox').classList.remove('show');
+            document.getElementById('summaryText').textContent = data.summary;
+            document.getElementById('pageRangeLabel').textContent = `Pages ${pf}–${pt}`;
+            document.getElementById('summaryResult').classList.add('show');
+            addToHistory(data.summary, pf, pt);
+        } catch(e) {
+            document.getElementById('loadingBox').classList.remove('show');
+            document.getElementById('placeholder').style.display = 'flex';
+            alert('❌ Summary generation failed.');
+        }
+        document.getElementById('generateBtn').disabled = false;
+    }
+
+    function showHistoryFromEl(el) {
+        const text = el.getAttribute('data-summary');
+        const from = el.getAttribute('data-from');
+        const to = el.getAttribute('data-to');
+        showHistory(text, from, to);
+    }
+
+    function showHistory(text, from, to) {
+        document.getElementById('placeholder').style.display = 'none';
+        document.getElementById('loadingBox').classList.remove('show');
+        document.getElementById('summaryText').textContent = text;
+        document.getElementById('pageRangeLabel').textContent = `Pages ${from}–${to}`;
+        document.getElementById('summaryResult').classList.add('show');
+    }
+
+    function addToHistory(text, from, to) {
+        const list = document.querySelector('.history-card');
+        const empty = list.querySelector('.empty-history');
+        if (empty) empty.remove();
+        const div = document.createElement('div');
+        div.className = 'history-item';
+        div.onclick = () => showHistory(text, from, to);
+        div.innerHTML = `<div class="h-pages">Pages ${from} — ${to}</div><div class="h-preview">${text.substring(0,80)}...</div><div class="h-date">Just now</div>`;
+        list.appendChild(div);
+    }
+
+    function copySummary() {
+        navigator.clipboard.writeText(document.getElementById('summaryText').textContent).then(() => {
+            const btn = document.querySelector('.copy-btn');
+            btn.textContent = '✅ Copied!';
+            setTimeout(() => btn.textContent = '📋 Copy Summary', 2000);
+        });
+    }
+
+    function toggleTheme() {
+        const cur = document.documentElement.getAttribute('data-theme');
+        const nxt = cur==='dark'?'light':'dark';
+        document.documentElement.setAttribute('data-theme', nxt);
+        localStorage.setItem('readai_theme', nxt);
+        document.getElementById('themeBtn').textContent = nxt==='dark'?'☀️':'🌙';
+    }
+    document.addEventListener('DOMContentLoaded', () => {
+        const t = localStorage.getItem('readai_theme')||'dark';
+        document.getElementById('themeBtn').textContent = t==='dark'?'☀️':'🌙';
+    });
+</script>
+</body>
+</html>

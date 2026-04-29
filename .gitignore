@@ -1,0 +1,11 @@
+.env
+__pycache__/
+*.pyc
+instance/
+uploads/
+readai.log
+readai
+*.db
+Basic/
+Packages
+*.pdf

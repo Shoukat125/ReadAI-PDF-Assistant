@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en"><script>(function(){var t=localStorage.getItem('readai_theme')||'dark';document.documentElement.setAttribute('data-theme',t);})();</script>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ReadAI — Login</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0f0e0c;
+            --surface: #1a1916;
+            --surface2: #222018;
+            --border: #2e2c28;
+            --gold: #c9a84c;
+            --gold-light: #e8c97a;
+            --text: #f0ece4;
+            --text-muted: #8a8578;
+            --error: #e05c5c;
+            --radius: 12px;
+        }
+        [data-theme="light"] {
+            --bg: #f5f2eb;
+            --surface: #ffffff;
+            --surface2: #ede9e0;
+            --border: #d8d2c4;
+            --gold: #a0722a;
+            --gold-light: #c9942e;
+            --text: #1e1c18;
+            --text-muted: #6b6457;
+            --error: #c0392b;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(ellipse 80% 60% at 20% 20%, rgba(201,168,76,0.07) 0%, transparent 60%),
+                        radial-gradient(ellipse 60% 80% at 80% 80%, rgba(201,168,76,0.05) 0%, transparent 60%);
+            pointer-events: none;
+        }
+        .wrapper {
+            width: 100%;
+            max-width: 420px;
+            padding: 24px;
+            position: relative;
+            z-index: 1;
+            animation: fadeUp 0.6s ease both;
+        }
+        @keyframes fadeUp { from { opacity:0; transform:translateY(24px); } to { opacity:1; transform:translateY(0); } }
+        .logo { text-align: center; margin-bottom: 36px; }
+        .logo-icon {
+            width: 64px; height: 64px;
+            background: linear-gradient(135deg, var(--gold), var(--gold-light));
+            border-radius: 16px;
+            display: inline-flex; align-items: center; justify-content: center;
+            font-size: 28px; margin-bottom: 14px;
+            box-shadow: 0 8px 32px rgba(201,168,76,0.3);
+        }
+        .logo h1 { font-family: 'Playfair Display', serif; font-size: 28px; letter-spacing: -0.5px; }
+        .logo p { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 36px;
+            box-shadow: 0 24px 64px rgba(0,0,0,0.3);
+        }
+        .card h2 { font-family: 'Playfair Display', serif; font-size: 20px; margin-bottom: 6px; }
+        .card p { font-size: 13px; color: var(--text-muted); margin-bottom: 24px; }
+        .error-box {
+            background: rgba(224,92,92,0.1);
+            border: 1px solid rgba(224,92,92,0.3);
+            border-radius: var(--radius);
+            padding: 12px 16px;
+            font-size: 13px; color: var(--error);
+            margin-bottom: 20px;
+        }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 8px; }
+        .input-wrap { position: relative; }
+        .input-wrap span { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 16px; pointer-events: none; }
+        input[type="password"] {
+            width: 100%; background: var(--bg);
+            border: 1px solid var(--border); border-radius: var(--radius);
+            padding: 13px 14px 13px 44px;
+            color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 15px;
+            outline: none; transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        input[type="password"]:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(201,168,76,0.15); }
+        input[type="password"]::placeholder { color: var(--text-muted); }
+        .btn-login {
+            width: 100%; padding: 13px;
+            background: linear-gradient(135deg, var(--gold), var(--gold-light));
+            border: none; border-radius: var(--radius);
+            color: #0f0e0c; font-family: 'DM Sans', sans-serif;
+            font-size: 15px; font-weight: 600; cursor: pointer;
+            transition: opacity 0.2s, transform 0.2s, box-shadow 0.2s;
+            margin-top: 8px;
+        }
+        .btn-login:hover { opacity: 0.92; transform: translateY(-1px); box-shadow: 0 8px 24px rgba(201,168,76,0.35); }
+        .divider { display: flex; align-items: center; gap: 12px; margin: 24px 0; }
+        .divider hr { flex: 1; border: none; border-top: 1px solid var(--border); }
+        .divider span { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+        .footer { text-align: center; margin-top: 20px; font-size: 12px; color: var(--text-muted); display: flex; align-items: center; justify-content: center; gap: 12px; }
+        .theme-toggle {
+            width: 34px; height: 34px; border-radius: 50%;
+            border: 1px solid var(--border); background: var(--surface2);
+            color: var(--text-muted); font-size: 16px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; transition: all 0.2s;
+        }
+        .theme-toggle:hover { border-color: var(--gold); }
+    </style>
+</head>
+<body>
+<div class="wrapper">
+    <div class="logo">
+        <div class="logo-icon">📖</div>
+        <h1>ReadAI</h1>
+        <p>Your Smart Reading Assistant</p>
+    </div>
+    <div class="card">
+        <h2>Welcome Back</h2>
+        <p>Enter your password to continue</p>
+        {% if error %}<div class="error-box">⚠️ {{ error }}</div>{% endif %}
+        <form method="POST" action="/login">
+            <div class="form-group">
+                <label>Password</label>
+                <div class="input-wrap">
+                    <span>🔑</span>
+                    <input type="password" name="password" placeholder="Enter your password" required autofocus>
+                </div>
+            </div>
+            <button type="submit" class="btn-login">Sign In →</button>
+        </form>
+        <div class="divider"><hr><span>ReadAI</span><hr></div>
+        <div style="text-align:center;font-size:12px;color:var(--text-muted);">📖 Read Smart. Learn Faster.</div>
+    </div>
+    <div class="footer">
+        <span>ReadAI © 2024</span>
+        <button class="theme-toggle" id="themeBtn" onclick="toggleTheme()">☀️</button>
+    </div>
+</div>
+<script>
+    function toggleTheme() {
+        const cur = document.documentElement.getAttribute('data-theme');
+        const nxt = cur === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', nxt);
+        localStorage.setItem('readai_theme', nxt);
+        document.getElementById('themeBtn').textContent = nxt === 'dark' ? '☀️' : '🌙';
+    }
+    document.addEventListener('DOMContentLoaded', () => {
+        const t = localStorage.getItem('readai_theme') || 'dark';
+        document.getElementById('themeBtn').textContent = t === 'dark' ? '☀️' : '🌙';
+    });
+</script>
+</body>
+</html>

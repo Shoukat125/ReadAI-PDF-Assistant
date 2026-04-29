@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en"><script>(function(){var t=localStorage.getItem('readai_theme')||'dark';document.documentElement.setAttribute('data-theme',t);})();</script>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ReadAI — Reader</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500;600&family=Lora:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root{--bg:#0f0e0c;--surface:#1a1916;--surface2:#222018;--border:#2e2c28;--gold:#c9a84c;--gold-light:#e8c97a;--text:#f0ece4;--text-muted:#8a8578;--success:#5cb85c;--error:#e05c5c;--radius:12px;}
+        [data-theme="light"]{--bg:#f5f2eb;--surface:#ffffff;--surface2:#ede9e0;--border:#d8d2c4;--gold:#a0722a;--gold-light:#c9942e;--text:#1e1c18;--text-muted:#6b6457;--success:#2d7a2d;--error:#c0392b;}
+        *{margin:0;padding:0;box-sizing:border-box;}
+        body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;display:flex;flex-direction:column;}
+
+        /* ── TOP NAV ── */
+        .topnav{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+        .topnav-left{display:flex;align-items:center;gap:14px;}
+        .back-btn{color:var(--text-muted);text-decoration:none;font-size:13px;transition:color 0.2s;}
+        .back-btn:hover{color:var(--text);}
+        .book-info h2{font-family:'Playfair Display',serif;font-size:15px;}
+        .book-info p{font-size:11px;color:var(--text-muted);}
+        .topnav-right{display:flex;align-items:center;gap:6px;}
+        .btn-nav{padding:6px 12px;border-radius:8px;font-size:12px;font-weight:500;text-decoration:none;border:1px solid var(--border);background:transparent;color:var(--text-muted);transition:all 0.2s;cursor:pointer;font-family:'DM Sans',sans-serif;}
+        .btn-nav:hover{border-color:var(--gold);color:var(--gold);}
+        .btn-nav.active-chat{background:rgba(201,168,76,0.12);color:var(--gold);border-color:rgba(201,168,76,0.4);}
+
+        /* ── MAIN LAYOUT ── */
+        .reader-layout{display:flex;flex:1;height:calc(100vh - 53px);}
+
+        /* ── LEFT: PAGE SIDEBAR ── */
+        .page-sidebar{width:190px;background:var(--surface);border-right:1px solid var(--border);overflow-y:auto;padding:12px;flex-shrink:0;}
+        .sidebar-title{font-size:10px;text-transform:uppercase;letter-spacing:1.2px;color:var(--text-muted);margin-bottom:10px;padding:0 4px;}
+        .page-item{padding:8px 10px;border-radius:8px;cursor:pointer;font-size:12px;color:var(--text-muted);transition:all 0.2s;display:flex;align-items:center;gap:6px;margin-bottom:2px;}
+        .page-item:hover{background:var(--surface2);color:var(--text);}
+        .page-item.active{background:rgba(201,168,76,0.12);color:var(--gold);}
+        .pg-num{font-size:10px;background:var(--surface2);padding:2px 5px;border-radius:4px;min-width:24px;text-align:center;}
+
+        /* ── CENTER: READER ── */
+        .reader-main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;}
+        .page-controls{background:var(--surface2);border-bottom:1px solid var(--border);padding:10px 20px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+        .ctrl-btn{padding:6px 12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer;transition:all 0.2s;}
+        .ctrl-btn:hover{border-color:var(--gold);color:var(--gold);}
+        .ctrl-btn:disabled{opacity:0.4;cursor:not-allowed;}
+        .page-indicator{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-muted);}
+        .page-indicator input{width:48px;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:4px 8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:12px;text-align:center;outline:none;}
+        .page-indicator input:focus{border-color:var(--gold);}
+        .progress-wrap{padding:0 20px 8px;background:var(--surface2);flex-shrink:0;}
+        .progress-bar{height:3px;background:var(--border);border-radius:2px;overflow:hidden;}
+        .progress-fill{height:100%;background:linear-gradient(90deg,var(--gold),var(--gold-light));border-radius:2px;transition:width 0.3s ease;}
+        .content-area{flex:1;overflow-y:auto;padding:36px;}
+        .page-content{max-width:660px;margin:0 auto;}
+        .page-header{display:flex;align-items:center;gap:10px;margin-bottom:24px;padding-bottom:14px;border-bottom:1px solid var(--border);}
+        .page-badge{background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.3);color:var(--gold);padding:3px 12px;border-radius:20px;font-size:11px;font-weight:600;}
+        .page-text{font-family:'Lora',serif;font-size:16px;line-height:1.9;color:var(--text);white-space:pre-wrap;word-break:break-word;}
+        .loading-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 20px;color:var(--text-muted);gap:12px;}
+        .spinner{width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--gold);border-radius:50%;animation:spin 0.8s linear infinite;}
+        @keyframes spin{to{transform:rotate(360deg);}}
+
+        /* ── RIGHT: CHAT PANEL ── */
+        .chat-panel{width:320px;background:var(--surface);border-left:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;transition:width 0.3s ease,opacity 0.3s ease;height:calc(100vh - 53px);overflow:hidden;}
+        .chat-panel.collapsed{width:0;opacity:0;overflow:hidden;border-left:none;}
+
+        .chat-header{padding:14px 16px;border-bottom:1px solid var(--border);flex-shrink:0;}
+        .chat-header-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+        .chat-title{font-family:'Playfair Display',serif;font-size:14px;display:flex;align-items:center;gap:6px;}
+        .chat-close{background:none;border:none;color:var(--text-muted);font-size:16px;cursor:pointer;transition:color 0.2s;line-height:1;}
+        .chat-close:hover{color:var(--text);}
+
+        /* Book selector inside chat */
+        .book-selector{width:100%;}
+        .book-selector label{display:block;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:5px;}
+        .book-selector select{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:7px 10px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:12px;outline:none;cursor:pointer;transition:border-color 0.2s;}
+        .book-selector select:focus{border-color:var(--gold);}
+
+        /* Page scope toggle */
+        .scope-row{display:flex;gap:6px;margin-top:8px;}
+        .scope-btn{flex:1;padding:5px 0;border-radius:7px;font-size:11px;font-weight:500;border:1px solid var(--border);background:transparent;color:var(--text-muted);cursor:pointer;transition:all 0.2s;font-family:'DM Sans',sans-serif;}
+        .scope-btn.active{background:rgba(201,168,76,0.12);color:var(--gold);border-color:rgba(201,168,76,0.35);}
+
+        /* Messages */
+        .chat-messages{flex:1;min-height:0;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;scroll-behavior:smooth;}
+        .chat-welcome{text-align:center;padding:24px 12px;color:var(--text-muted);}
+        .chat-welcome .wi{font-size:32px;margin-bottom:8px;}
+        .chat-welcome p{font-size:12px;line-height:1.6;}
+        .msg{display:flex;flex-direction:column;gap:3px;animation:msgIn 0.25s ease;}
+        @keyframes msgIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+        .msg-user{align-items:flex-end;}
+        .msg-ai{align-items:flex-start;}
+        .msg-bubble{padding:9px 13px;border-radius:14px;font-size:13px;line-height:1.6;max-width:90%;word-break:break-word;}
+        .msg-user .msg-bubble{background:linear-gradient(135deg,var(--gold),var(--gold-light));color:#0f0e0c;border-bottom-right-radius:4px;}
+        .msg-ai .msg-bubble{background:var(--surface2);border:1px solid var(--border);color:var(--text);border-bottom-left-radius:4px;white-space:pre-wrap;}
+        .msg-meta{font-size:10px;color:var(--text-muted);padding:0 4px;}
+        .msg-book-tag{font-size:10px;color:var(--gold);padding:0 4px;}
+
+        /* Typing indicator */
+        .typing-bubble{background:var(--surface2);border:1px solid var(--border);border-radius:14px;border-bottom-left-radius:4px;padding:10px 14px;display:flex;gap:5px;align-items:center;}
+        .typing-bubble span{width:7px;height:7px;background:var(--text-muted);border-radius:50%;animation:bounce 1.2s infinite;}
+        .typing-bubble span:nth-child(2){animation-delay:0.2s;}
+        .typing-bubble span:nth-child(3){animation-delay:0.4s;}
+        @keyframes bounce{0%,60%,100%{transform:translateY(0);}30%{transform:translateY(-6px);}}
+
+        /* Chat input */
+        .chat-input-area{padding:12px;border-top:1px solid var(--border);flex-shrink:0;}
+        .chat-input-row{display:flex;gap:6px;align-items:flex-end;}
+        .chat-input-row textarea{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:9px 12px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;outline:none;resize:none;min-height:38px;max-height:100px;line-height:1.5;transition:border-color 0.2s;}
+        .chat-input-row textarea:focus{border-color:var(--gold);}
+        .chat-input-row textarea::placeholder{color:var(--text-muted);}
+        .send-btn{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--gold),var(--gold-light));border:none;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;transition:opacity 0.2s,transform 0.15s;flex-shrink:0;}
+        .send-btn:hover{opacity:0.9;transform:scale(1.05);}
+        .send-btn:disabled{opacity:0.4;cursor:not-allowed;transform:none;}
+        .clear-btn{width:100%;margin-top:7px;padding:5px;background:none;border:1px solid var(--border);border-radius:8px;color:var(--text-muted);font-size:11px;cursor:pointer;transition:all 0.2s;font-family:'DM Sans',sans-serif;}
+        .clear-btn:hover{border-color:var(--error);color:var(--error);}
+    </style>
+</head>
+<body>
+<nav class="topnav">
+    <div class="topnav-left">
+        <a href="/library" class="back-btn">← Back</a>
+        <div style="width:1px;height:18px;background:var(--border);"></div>
+        <div class="book-info">
+            <h2>{{ book[1] }}</h2>
+            <p>{{ book[3] or 'General' }} • {{ book[4] }} pages</p>
+        </div>
+    </div>
+    <div class="topnav-right">
+        <a href="/summary/{{ book[0] }}" class="btn-nav">📋 Summary</a>
+        <button class="btn-nav" id="chatToggleBtn" onclick="toggleChat()">💬 Chat</button>
+        <button class="btn-nav" onclick="toggleTheme()" id="themeBtn">☀️</button>
+    </div>
+</nav>
+
+<div class="reader-layout">
+    <!-- LEFT: Page list -->
+    <aside class="page-sidebar">
+        <div class="sidebar-title">Pages</div>
+        {% for i in range(1, total_pages + 1) %}
+        <div class="page-item {% if i == last_page %}active{% endif %}" onclick="loadPage({{ i }})" id="page-item-{{ i }}">
+            <span class="pg-num">{{ i }}</span> Page {{ i }}
+        </div>
+        {% endfor %}
+    </aside>
+
+    <!-- CENTER: Reader -->
+    <div class="reader-main">
+        <div class="page-controls">
+            <div style="display:flex;gap:8px;">
+                <button class="ctrl-btn" id="prevBtn" onclick="prevPage()">← Prev</button>
+                <button class="ctrl-btn" id="nextBtn" onclick="nextPage()">Next →</button>
+            </div>
+            <div class="page-indicator">
+                Page <input type="number" id="pageInput" min="1" max="{{ total_pages }}" value="{{ last_page }}" onchange="loadPage(parseInt(this.value))">
+                of <strong>{{ total_pages }}</strong>
+            </div>
+            <span id="progressText" style="font-size:12px;color:var(--text-muted);">0%</span>
+        </div>
+        <div class="progress-wrap">
+            <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+        </div>
+        <div class="content-area">
+            <div class="page-content">
+                <div id="pageDisplay">
+                    <div class="loading-state"><div class="spinner"></div><span>Loading...</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- RIGHT: Chat Panel -->
+    <div class="chat-panel collapsed" id="chatPanel">
+        <div class="chat-header">
+            <div class="chat-header-top">
+                <div class="chat-title">🤖 <span>ReadAI Chat</span></div>
+                <button class="chat-close" onclick="toggleChat()" title="Close chat">✕</button>
+            </div>
+            <!-- Book selector -->
+            <div class="book-selector">
+                <label>Book</label>
+                <select id="chatBookSelect" onchange="onBookChange()">
+                    {% for b in all_books %}
+                    <option value="{{ b[0] }}" data-pages="{{ b[4] }}" {% if b[0] == book[0] %}selected{% endif %}>
+                        {{ b[1][:30] }}{% if b[1]|length > 30 %}…{% endif %}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <!-- Scope -->
+            <div class="scope-row">
+                <button class="scope-btn active" id="scopeCurrentBtn" onclick="setScope('current')">📄 Current Page</button>
+                <button class="scope-btn" id="scopeAllBtn" onclick="setScope('all')">📚 Full Book</button>
+            </div>
+        </div>
+
+        <div class="chat-messages" id="chatMessages">
+            <div class="chat-welcome">
+                <div class="wi">🤖</div>
+                <p>Ask me anything about the selected book. I'll answer based on the content!</p>
+            </div>
+        </div>
+
+        <div class="chat-input-area">
+            <div class="chat-input-row">
+                <textarea id="chatInput" placeholder="Koi bhi sawaal poocho..." rows="1"
+                    onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+                <button class="send-btn" id="sendBtn" onclick="sendMessage()" title="Send">➤</button>
+            </div>
+            <button class="clear-btn" onclick="clearChat()">🗑️ Clear chat</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const BOOK_ID = {{ book[0] }};
+    const TOTAL_PAGES = {{ total_pages }};
+    let currentPage = {{ last_page }};
+    let chatOpen = false;
+    let chatScope = 'current';   // 'current' | 'all'
+    let isSending = false;
+
+    // ── READER ──────────────────────────────────────────
+    async function loadPage(pageNum) {
+        if (pageNum < 1 || pageNum > TOTAL_PAGES) return;
+        currentPage = pageNum;
+        document.getElementById('pageInput').value = pageNum;
+        document.getElementById('prevBtn').disabled = pageNum <= 1;
+        document.getElementById('nextBtn').disabled = pageNum >= TOTAL_PAGES;
+        const pct = Math.round((pageNum / TOTAL_PAGES) * 100);
+        document.getElementById('progressFill').style.width = pct + '%';
+        document.getElementById('progressText').textContent = pct + '%';
+        document.querySelectorAll('.page-item').forEach(el => el.classList.remove('active'));
+        const activeItem = document.getElementById('page-item-' + pageNum);
+        if (activeItem) { activeItem.classList.add('active'); activeItem.scrollIntoView({block:'nearest',behavior:'smooth'}); }
+        document.getElementById('pageDisplay').innerHTML = '<div class="loading-state"><div class="spinner"></div><span>Loading page ' + pageNum + '...</span></div>';
+        try {
+            const res = await fetch('/api/get-page', {
+                method: 'POST', headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({book_id: BOOK_ID, page_number: pageNum})
+            });
+            const data = await res.json();
+            if (data.content) {
+                document.getElementById('pageDisplay').innerHTML =
+                    '<div class="page-header"><span class="page-badge">Page ' + pageNum + '</span><span style="font-size:12px;color:var(--text-muted);">of ' + TOTAL_PAGES + '</span></div>' +
+                    '<div class="page-text">' + escapeHtml(data.content) + '</div>';
+            } else {
+                document.getElementById('pageDisplay').innerHTML = '<div style="text-align:center;padding:60px;color:var(--text-muted);">⚠️ No content on this page.</div>';
+            }
+        } catch(e) {
+            document.getElementById('pageDisplay').innerHTML = '<div style="text-align:center;padding:60px;color:var(--error);">❌ Error loading page.</div>';
+        }
+    }
+
+    function prevPage() { loadPage(currentPage - 1); }
+    function nextPage() { loadPage(currentPage + 1); }
+
+    // ── CHAT TOGGLE ─────────────────────────────────────
+    function toggleChat() {
+        chatOpen = !chatOpen;
+        const panel = document.getElementById('chatPanel');
+        const btn = document.getElementById('chatToggleBtn');
+        panel.classList.toggle('collapsed', !chatOpen);
+        btn.classList.toggle('active-chat', chatOpen);
+        if (chatOpen) {
+            setTimeout(() => document.getElementById('chatInput').focus(), 350);
+        }
+    }
+
+    // ── BOOK CHANGE ─────────────────────────────────────
+    function onBookChange() {
+        // Reset conversation context hint in welcome (don't wipe messages)
+        const sel = document.getElementById('chatBookSelect');
+        const bookName = sel.options[sel.selectedIndex].text;
+        addSystemMsg('📚 Book changed to: ' + bookName);
+    }
+
+    // ── SCOPE ────────────────────────────────────────────
+    function setScope(s) {
+        chatScope = s;
+        document.getElementById('scopeCurrentBtn').classList.toggle('active', s === 'current');
+        document.getElementById('scopeAllBtn').classList.toggle('active', s === 'all');
+    }
+
+    // ── SEND MESSAGE ─────────────────────────────────────
+    async function sendMessage() {
+        if (isSending) return;
+        const input = document.getElementById('chatInput');
+        const q = input.value.trim();
+        if (!q) return;
+
+        input.value = '';
+        autoResize(input);
+
+        const sel = document.getElementById('chatBookSelect');
+        const selectedBookId = parseInt(sel.value);
+        const selectedBookPages = parseInt(sel.options[sel.selectedIndex].getAttribute('data-pages'));
+        const bookName = sel.options[sel.selectedIndex].text;
+
+        // Determine page range
+        let pageFrom, pageTo;
+        if (chatScope === 'current') {
+            pageFrom = currentPage;
+            pageTo = currentPage;
+        } else {
+            pageFrom = 1;
+            pageTo = selectedBookPages;
+        }
+
+        // Add user message
+        addMsg('user', q);
+
+        // Show typing
+        const typingId = addTyping();
+        isSending = true;
+        document.getElementById('sendBtn').disabled = true;
+
+        try {
+            const res = await fetch('/api/ask', {
+                method: 'POST',
+                headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({
+                    book_id: selectedBookId,
+                    page_from: pageFrom,
+                    page_to: pageTo,
+                    question: q
+                })
+            });
+            const data = await res.json();
+            removeTyping(typingId);
+            addMsg('ai', data.answer || '❌ No answer.', bookName, chatScope === 'current' ? 'Page ' + currentPage : 'Full Book');
+        } catch(e) {
+            removeTyping(typingId);
+            addMsg('ai', '❌ Connection error. Please try again.');
+        }
+
+        isSending = false;
+        document.getElementById('sendBtn').disabled = false;
+        input.focus();
+    }
+
+    // ── MESSAGE HELPERS ──────────────────────────────────
+    function addMsg(role, text, bookName, scopeLabel) {
+        const container = document.getElementById('chatMessages');
+        // Remove welcome if present
+        const welcome = container.querySelector('.chat-welcome');
+        if (welcome) welcome.remove();
+
+        const div = document.createElement('div');
+        div.className = 'msg msg-' + role;
+
+        const now = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+        let metaHtml = '<div class="msg-meta">' + now + '</div>';
+        if (role === 'ai' && bookName) {
+            metaHtml = '<div class="msg-book-tag">📖 ' + bookName + ' · ' + scopeLabel + '</div>' + metaHtml;
+        }
+
+        div.innerHTML = '<div class="msg-bubble">' + escapeHtml(text) + '</div>' + metaHtml;
+        container.appendChild(div);
+        div.scrollIntoView({block:'end', behavior:'smooth'});
+    }
+
+    function addSystemMsg(text) {
+        const container = document.getElementById('chatMessages');
+        const div = document.createElement('div');
+        div.style.cssText = 'text-align:center;font-size:11px;color:var(--text-muted);padding:4px 0;';
+        div.textContent = text;
+        container.appendChild(div);
+        div.scrollIntoView({block:'end', behavior:'smooth'});
+    }
+
+    let typingCounter = 0;
+    function addTyping() {
+        const container = document.getElementById('chatMessages');
+        const id = 'typing-' + (++typingCounter);
+        const div = document.createElement('div');
+        div.className = 'msg msg-ai';
+        div.id = id;
+        div.innerHTML = '<div class="typing-bubble"><span></span><span></span><span></span></div>';
+        container.appendChild(div);
+        div.scrollIntoView({block:'end', behavior:'smooth'});
+        return id;
+    }
+
+    function removeTyping(id) {
+        const el = document.getElementById(id);
+        if (el) el.remove();
+    }
+
+    function clearChat() {
+        const container = document.getElementById('chatMessages');
+        container.innerHTML = '<div class="chat-welcome"><div class="wi">🤖</div><p>Ask me anything about the selected book. I\'ll answer based on the content!</p></div>';
+    }
+
+    // ── INPUT HELPERS ────────────────────────────────────
+    function handleKey(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage();
+        }
+    }
+
+    function autoResize(el) {
+        el.style.height = 'auto';
+        el.style.height = Math.min(el.scrollHeight, 100) + 'px';
+    }
+
+    function escapeHtml(t) {
+        return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    // ── KEYBOARD SHORTCUTS ───────────────────────────────
+    document.addEventListener('keydown', e => {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+        if (e.key === 'ArrowLeft') prevPage();
+        if (e.key === 'ArrowRight') nextPage();
+        if (e.key === 'c') toggleChat();
+    });
+
+    // ── THEME ────────────────────────────────────────────
+    function toggleTheme() {
+        const cur = document.documentElement.getAttribute('data-theme');
+        const nxt = cur === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', nxt);
+        localStorage.setItem('readai_theme', nxt);
+        document.getElementById('themeBtn').textContent = nxt === 'dark' ? '☀️' : '🌙';
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const t = localStorage.getItem('readai_theme') || 'dark';
+        document.getElementById('themeBtn').textContent = t === 'dark' ? '☀️' : '🌙';
+    });
+
+    loadPage(currentPage);
+</script>
+</body>
+</html>
