@@ -1,432 +1,1092 @@
 <!DOCTYPE html>
-<html lang="en"><script>(function(){var t=localStorage.getItem('readai_theme')||'dark';document.documentElement.setAttribute('data-theme',t);})();</script>
+<html lang="en"><script>
+(function(){var t=localStorage.getItem('scholarai_theme')||'dark';document.documentElement.setAttribute('data-theme',t);})();
+</script>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ReadAI — Reader</title>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500;600&family=Lora:wght@400;600&display=swap" rel="stylesheet">
+    <title>ScholarAI — Reader</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
-        :root{--bg:#0f0e0c;--surface:#1a1916;--surface2:#222018;--border:#2e2c28;--gold:#c9a84c;--gold-light:#e8c97a;--text:#f0ece4;--text-muted:#8a8578;--success:#5cb85c;--error:#e05c5c;--radius:12px;}
-        [data-theme="light"]{--bg:#f5f2eb;--surface:#ffffff;--surface2:#ede9e0;--border:#d8d2c4;--gold:#a0722a;--gold-light:#c9942e;--text:#1e1c18;--text-muted:#6b6457;--success:#2d7a2d;--error:#c0392b;}
-        *{margin:0;padding:0;box-sizing:border-box;}
-        body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;display:flex;flex-direction:column;}
+        :root {
+            --bg: #1a0a0a;
+            --surface: #5c1a1a;
+            --surface2: #6e2020;
+            --border: #8b3333;
+            --gold: #c9a84c;
+            --gold-light: #e8c97a;
+            --text: #f5ece4;
+            --text-muted: #d4b8a8;
+            --success: #5cb85c;
+            --error: #e05c5c;
+            --radius: 12px;
+            --sidebar-bg: #5c1a1a;
+            --sidebar-border: #8b3333;
+            --stat-bg: #6e2020;
+            --stat-border: #8b3333;
+        }
 
-        /* ── TOP NAV ── */
-        .topnav{background:#6b1a22;border-bottom:1px solid #8b2635;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
-        .topnav-left{display:flex;align-items:center;gap:14px;}
-        .back-btn{color:rgba(255,255,255,0.75);text-decoration:none;font-size:13px;transition:color 0.2s;}
-        .back-btn:hover{color:#fff;}
-        .book-info h2{font-family:'Playfair Display',serif;font-size:15px;}
-        .book-info p{font-size:11px;color:var(--text-muted);}
-        .topnav-right{display:flex;align-items:center;gap:6px;}
-        .btn-nav{padding:6px 12px;border-radius:8px;font-size:12px;font-weight:500;text-decoration:none;border:1px solid rgba(255,255,255,0.25);background:transparent;color:rgba(255,255,255,0.8);transition:all 0.2s;cursor:pointer;font-family:'DM Sans',sans-serif;}
-        .btn-nav:hover{border-color:var(--gold);color:var(--gold);}
-        .btn-nav.active-chat{background:rgba(201,168,76,0.12);color:var(--gold);border-color:rgba(201,168,76,0.4);}
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
-        /* ── MAIN LAYOUT ── */
-        .reader-layout{display:flex;flex:1;height:calc(100vh - 53px);}
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            min-height: 100vh;
+        }
 
-        /* ── LEFT: PAGE SIDEBAR ── */
-        .page-sidebar{width:190px;background:#6b1a22;border-right:1px solid #8b2635;overflow-y:auto;padding:12px;flex-shrink:0;}
-        .sidebar-title{font-size:10px;text-transform:uppercase;letter-spacing:1.2px;color:rgba(255,255,255,0.6);margin-bottom:10px;padding:0 4px;}
-        .page-item{padding:8px 10px;border-radius:8px;cursor:pointer;font-size:12px;color:rgba(255,255,255,0.8);transition:all 0.2s;display:flex;align-items:center;gap:6px;margin-bottom:2px;}
-        .page-item:hover{background:rgba(255,255,255,0.12);color:#fff;}
-        .page-item.active{background:rgba(201,168,76,0.25);color:var(--gold);}
-        .pg-num{font-size:10px;background:var(--surface2);padding:2px 5px;border-radius:4px;min-width:24px;text-align:center;}
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(ellipse 80% 60% at 10% 10%, rgba(201,168,76,0.05) 0%, transparent 60%);
+            pointer-events: none;
+            z-index: 0;
+        }
 
-        /* ── CENTER: READER ── */
-        .reader-main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;}
-        .page-controls{background:var(--surface2);border-bottom:1px solid var(--border);padding:10px 20px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
-        .ctrl-btn{padding:6px 12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer;transition:all 0.2s;}
-        .ctrl-btn:hover{border-color:var(--gold);color:var(--gold);}
-        .ctrl-btn:disabled{opacity:0.4;cursor:not-allowed;}
-        .page-indicator{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-muted);}
-        .page-indicator input{width:48px;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:4px 8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:12px;text-align:center;outline:none;}
-        .page-indicator input:focus{border-color:var(--gold);}
-        .progress-wrap{padding:0 20px 8px;background:var(--surface2);flex-shrink:0;}
-        .progress-bar{height:3px;background:var(--border);border-radius:2px;overflow:hidden;}
-        .progress-fill{height:100%;background:linear-gradient(90deg,var(--gold),var(--gold-light));border-radius:2px;transition:width 0.3s ease;}
-        .content-area{flex:1;overflow-y:auto;padding:36px;}
-        .page-content{max-width:660px;margin:0 auto;}
-        .page-header{display:flex;align-items:center;gap:10px;margin-bottom:24px;padding-bottom:14px;border-bottom:1px solid var(--border);}
-        .page-badge{background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.3);color:var(--gold);padding:3px 12px;border-radius:20px;font-size:11px;font-weight:600;}
-        .page-text{font-family:'Lora',serif;font-size:16px;line-height:1.9;color:var(--text);white-space:pre-wrap;word-break:break-word;}
-        .loading-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 20px;color:var(--text-muted);gap:12px;}
-        .spinner{width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--gold);border-radius:50%;animation:spin 0.8s linear infinite;}
-        @keyframes spin{to{transform:rotate(360deg);}}
+        /* SIDEBAR */
+        .sidebar {
+            position: fixed;
+            left: 0; top: 0; bottom: 0;
+            width: 240px;
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            z-index: 100;
+            padding: 28px 0;
+        }
 
-        /* ── RIGHT: CHAT PANEL ── */
-        .chat-panel{width:320px;background:var(--surface);border-left:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;transition:width 0.3s ease,opacity 0.3s ease;height:calc(100vh - 53px);overflow:hidden;}
-        .chat-panel.collapsed{width:0;opacity:0;overflow:hidden;border-left:none;}
+        .sidebar-logo {
+            padding: 0 24px 28px;
+            border-bottom: 1px solid var(--border);
+        }
 
-        .chat-header{padding:14px 16px;border-bottom:1px solid var(--border);flex-shrink:0;}
-        .chat-header-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
-        .chat-title{font-family:'Playfair Display',serif;font-size:14px;display:flex;align-items:center;gap:6px;}
-        .chat-close{background:none;border:none;color:var(--text-muted);font-size:16px;cursor:pointer;transition:color 0.2s;line-height:1;}
-        .chat-close:hover{color:var(--text);}
+        .sidebar-logo .logo-icon {
+            width: 40px; height: 40px;
+            background: linear-gradient(135deg, var(--gold), var(--gold-light));
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px; margin-bottom: 10px;
+        }
 
-        /* Book selector inside chat */
-        .book-selector{width:100%;}
-        .book-selector label{display:block;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:5px;}
-        .book-selector select{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:7px 10px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:12px;outline:none;cursor:pointer;transition:border-color 0.2s;}
-        .book-selector select:focus{border-color:var(--gold);}
+        .sidebar-logo h2 { font-family: 'Playfair Display', serif; font-size: 18px; color: var(--text); }
+        .sidebar-logo p { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
 
-        /* Page scope toggle */
-        .scope-row{display:flex;gap:6px;margin-top:8px;}
-        .scope-btn{flex:1;padding:5px 0;border-radius:7px;font-size:11px;font-weight:500;border:1px solid var(--border);background:transparent;color:var(--text-muted);cursor:pointer;transition:all 0.2s;font-family:'DM Sans',sans-serif;}
-        .scope-btn.active{background:rgba(201,168,76,0.12);color:var(--gold);border-color:rgba(201,168,76,0.35);}
+        .sidebar-nav {
+            flex: 1;
+            padding: 20px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border) transparent;
+        }
 
-        /* Messages */
-        .chat-messages{flex:1;min-height:0;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;scroll-behavior:smooth;}
-        .chat-welcome{text-align:center;padding:24px 12px;color:var(--text-muted);}
-        .chat-welcome .wi{font-size:32px;margin-bottom:8px;}
-        .chat-welcome p{font-size:12px;line-height:1.6;}
-        .msg{display:flex;flex-direction:column;gap:3px;animation:msgIn 0.25s ease;}
-        @keyframes msgIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
-        .msg-user{align-items:flex-end;}
-        .msg-ai{align-items:flex-start;}
-        .msg-bubble{padding:9px 13px;border-radius:14px;font-size:13px;line-height:1.6;max-width:90%;word-break:break-word;}
-        .msg-user .msg-bubble{background:linear-gradient(135deg,var(--gold),var(--gold-light));color:#0f0e0c;border-bottom-right-radius:4px;}
-        .msg-ai .msg-bubble{background:var(--surface2);border:1px solid var(--border);color:var(--text);border-bottom-left-radius:4px;white-space:pre-wrap;}
-        .msg-meta{font-size:10px;color:var(--text-muted);padding:0 4px;}
-        .msg-book-tag{font-size:10px;color:var(--gold);padding:0 4px;}
+        .sidebar-nav::-webkit-scrollbar { width: 3px; }
+        .sidebar-nav::-webkit-scrollbar-track { background: transparent; }
+        .sidebar-nav::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
 
-        /* Typing indicator */
-        .typing-bubble{background:var(--surface2);border:1px solid var(--border);border-radius:14px;border-bottom-left-radius:4px;padding:10px 14px;display:flex;gap:5px;align-items:center;}
-        .typing-bubble span{width:7px;height:7px;background:var(--text-muted);border-radius:50%;animation:bounce 1.2s infinite;}
-        .typing-bubble span:nth-child(2){animation-delay:0.2s;}
-        .typing-bubble span:nth-child(3){animation-delay:0.4s;}
-        @keyframes bounce{0%,60%,100%{transform:translateY(0);}30%{transform:translateY(-6px);}}
+        .nav-label {
+            font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px;
+            color: var(--text-muted); padding: 8px 12px 4px; margin-top: 8px;
+        }
 
-        /* Chat input */
-        .chat-input-area{padding:12px;border-top:1px solid var(--border);flex-shrink:0;}
-        .chat-input-row{display:flex;gap:6px;align-items:flex-end;}
-        .chat-input-row textarea{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:9px 12px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;outline:none;resize:none;min-height:38px;max-height:100px;line-height:1.5;transition:border-color 0.2s;}
-        .chat-input-row textarea:focus{border-color:var(--gold);}
-        .chat-input-row textarea::placeholder{color:var(--text-muted);}
-        .send-btn{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--gold),var(--gold-light));border:none;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;transition:opacity 0.2s,transform 0.15s;flex-shrink:0;}
-        .send-btn:hover{opacity:0.9;transform:scale(1.05);}
-        .send-btn:disabled{opacity:0.4;cursor:not-allowed;transform:none;}
-        .clear-btn{width:100%;margin-top:7px;padding:5px;background:none;border:1px solid var(--border);border-radius:8px;color:var(--text-muted);font-size:11px;cursor:pointer;transition:all 0.2s;font-family:'DM Sans',sans-serif;}
-        .clear-btn:hover{border-color:var(--error);color:var(--error);}
+        .nav-item {
+            display: flex; align-items: center; gap: 10px;
+            padding: 10px 12px; border-radius: var(--radius);
+            color: var(--text-muted); text-decoration: none;
+            font-size: 14px; font-weight: 500; transition: all 0.2s;
+        }
+
+        .nav-item:hover { background: var(--surface2); color: var(--text); }
+        .nav-item.active { background: rgba(201,168,76,0.12); color: var(--gold); }
+        .nav-item .icon { font-size: 16px; width: 20px; text-align: center; }
+
+        .sidebar-footer {
+            padding: 20px 12px;
+            border-top: 1px solid var(--border);
+        }
+
+        .logout-btn {
+            display: flex; align-items: center; gap: 10px;
+            padding: 10px 12px; border-radius: var(--radius);
+            color: var(--error); text-decoration: none;
+            font-size: 14px; font-weight: 500; transition: all 0.2s;
+        }
+
+        .logout-btn:hover { background: rgba(224,92,92,0.1); }
+
+        /* MAIN */
+        .main {
+            margin-left: 240px;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .topbar {
+            padding: 20px 32px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--surface);
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+
+        .topbar-left { display: flex; align-items: center; gap: 16px; }
+
+        .back-btn {
+            display: flex; align-items: center; gap: 6px;
+            padding: 8px 14px; border-radius: var(--radius);
+            background: var(--surface2); border: 1px solid var(--border);
+            color: var(--text-muted); text-decoration: none;
+            font-size: 13px; transition: all 0.2s;
+        }
+
+        .back-btn:hover { color: var(--text); border-color: var(--gold); }
+
+        .book-info h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 18px; color: var(--text);
+        }
+
+        .book-info p { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+        .topbar-actions { display: flex; gap: 8px; }
+
+        .btn-sm {
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 500;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+
+        .btn-gold {
+            background: rgba(201,168,76,0.12);
+            color: var(--gold);
+            border-color: rgba(201,168,76,0.3);
+        }
+
+        .btn-gold:hover { background: rgba(201,168,76,0.22); }
+
+        .btn-green {
+            background: rgba(92,184,92,0.1);
+            color: var(--success);
+            border-color: rgba(92,184,92,0.25);
+        }
+
+        .btn-green:hover { background: rgba(92,184,92,0.2); }
+
+        .btn-blue {
+            background: rgba(100,150,255,0.1);
+            color: #7eb3ff;
+            border-color: rgba(100,150,255,0.25);
+        }
+
+        .btn-blue:hover { background: rgba(100,150,255,0.2); }
+
+        /* READER LAYOUT */
+        .reader-layout {
+            display: flex;
+            flex: 1;
+            height: calc(100vh - 73px);
+        }
+
+        /* PAGE CONTENT AREA */
+        .page-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .page-content-wrap {
+            flex: 1;
+            overflow-y: auto;
+            padding: 40px;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border) transparent;
+        }
+
+        .page-content-wrap::-webkit-scrollbar { width: 6px; }
+        .page-content-wrap::-webkit-scrollbar-track { background: transparent; }
+        .page-content-wrap::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+        .page-content {
+            max-width: 720px;
+            margin: 0 auto;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 48px;
+            min-height: 500px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .page-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 32px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .page-number-badge {
+            font-family: 'Playfair Display', serif;
+            font-size: 14px;
+            color: var(--gold);
+            background: rgba(201,168,76,0.1);
+            border: 1px solid rgba(201,168,76,0.2);
+            padding: 4px 12px;
+            border-radius: 20px;
+        }
+
+        .page-of {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .page-text {
+            font-size: 15px;
+            line-height: 1.9;
+            color: var(--text);
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .page-empty {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-muted);
+        }
+
+        .page-empty .icon { font-size: 40px; margin-bottom: 12px; }
+        .page-empty p { font-size: 14px; }
+
+        /* LOADING */
+        .loading {
+            text-align: center;
+            padding: 60px;
+            color: var(--text-muted);
+        }
+
+        .spinner {
+            width: 32px; height: 32px;
+            border: 3px solid var(--border);
+            border-top-color: var(--gold);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 12px;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* NAVIGATION BAR */
+        .nav-bar {
+            padding: 16px 40px;
+            border-top: 1px solid var(--border);
+            background: var(--surface);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+        }
+
+        .nav-btn {
+            padding: 10px 20px;
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            background: var(--surface2);
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .nav-btn:hover:not(:disabled) {
+            border-color: var(--gold);
+            color: var(--gold);
+        }
+
+        .nav-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .page-input-wrap {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        .page-input {
+            width: 64px;
+            text-align: center;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 8px;
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .page-input:focus { border-color: var(--gold); }
+
+        .btn-go {
+            padding: 8px 16px;
+            background: linear-gradient(135deg, var(--gold), var(--gold-light));
+            border: none;
+            border-radius: 8px;
+            color: #0f0e0c;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .btn-go:hover { opacity: 0.9; }
+
+        /* NOTES PANEL */
+        .notes-panel {
+            width: 280px;
+            border-left: 1px solid var(--border);
+            background: var(--surface);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .notes-panel-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .notes-panel-header h3 {
+            font-family: 'Playfair Display', serif;
+            font-size: 16px;
+            margin-bottom: 12px;
+        }
+
+        .note-input {
+            width: 100%;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 10px;
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 13px;
+            resize: vertical;
+            min-height: 80px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .note-input:focus { border-color: var(--gold); }
+
+        .btn-save-note {
+            margin-top: 8px;
+            width: 100%;
+            padding: 9px;
+            background: linear-gradient(135deg, var(--gold), var(--gold-light));
+            border: none;
+            border-radius: 8px;
+            color: #0f0e0c;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .btn-save-note:hover { opacity: 0.9; }
+
+        .notes-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border) transparent;
+        }
+
+        .notes-list::-webkit-scrollbar { width: 4px; }
+        .notes-list::-webkit-scrollbar-track { background: transparent; }
+        .notes-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+        .note-item {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 12px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .note-item-meta {
+            font-size: 11px;
+            color: var(--gold);
+            margin-bottom: 6px;
+        }
+
+        .note-item-text {
+            font-size: 13px;
+            line-height: 1.5;
+            color: var(--text);
+        }
+
+        .btn-del-note {
+            margin-top: 8px;
+            padding: 4px 10px;
+            border-radius: 6px;
+            border: none;
+            background: rgba(224,92,92,0.1);
+            color: var(--error);
+            font-size: 11px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-del-note:hover { background: rgba(224,92,92,0.2); }
+
+        .notes-empty {
+            text-align: center;
+            padding: 24px;
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+
+        /* PROGRESS BAR */
+        .progress-bar-wrap {
+            height: 3px;
+            background: var(--border);
+            position: relative;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--gold), var(--gold-light));
+            transition: width 0.4s ease;
+        }
+
+        /* Q&A FLOATING BTN */
+        .qa-btn {
+            position: fixed;
+            bottom: 100px;
+            right: 300px;
+            width: 48px; height: 48px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--gold), var(--gold-light));
+            border: none;
+            cursor: pointer;
+            font-size: 20px;
+            box-shadow: 0 4px 16px rgba(201,168,76,0.4);
+            transition: transform 0.2s;
+            z-index: 200;
+        }
+
+        .qa-btn:hover { transform: scale(1.1); }
+
+        /* Q&A MODAL */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 300;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.open { display: flex; }
+
+        .modal {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 28px;
+            width: 500px;
+            max-width: 90vw;
+            animation: fadeUp 0.3s ease;
+        }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .modal-header h3 {
+            font-family: 'Playfair Display', serif;
+            font-size: 18px;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 20px;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .modal-close:hover { color: var(--text); }
+
+        .qa-input {
+            width: 100%;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 12px;
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+            resize: vertical;
+            min-height: 80px;
+            margin-bottom: 12px;
+        }
+
+        .qa-input:focus { border-color: var(--gold); }
+
+        .qa-range {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            margin-bottom: 12px;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .qa-range input {
+            width: 72px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 8px;
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 13px;
+            outline: none;
+            text-align: center;
+        }
+
+        .qa-range input:focus { border-color: var(--gold); }
+
+        .btn-ask {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, var(--gold), var(--gold-light));
+            border: none;
+            border-radius: var(--radius);
+            color: #0f0e0c;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .btn-ask:hover { opacity: 0.9; }
+
+        .qa-answer {
+            margin-top: 16px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px;
+            font-size: 14px;
+            line-height: 1.7;
+            color: var(--text);
+            display: none;
+            white-space: pre-wrap;
+        }
+
+        
+
+        .theme-toggle {
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            border: 1px solid var(--border);
+            background: var(--surface2);
+            color: var(--text-muted);
+            font-size: 16px;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+        .theme-toggle:hover { border-color: var(--gold); color: var(--text); }
+    
+        [data-theme="light"] {
+            --bg: #fdf6f0;
+            --surface: #7a1f1f;
+            --surface2: #8b2828;
+            --border: #a33030;
+            --gold: #c9a84c;
+            --gold-light: #e8c97a;
+            --text: #ffffff;
+            --text-muted: #f0d0c0;
+            --success: #2d7a2d;
+            --error: #ff6b6b;
+            --sidebar-bg: #7a1f1f;
+            --sidebar-border: #a33030;
+            --stat-bg: #8b2828;
+            --stat-border: #a33030;
+        }
+        
+        [data-theme="light"] .main,
+        [data-theme="light"] .topbar,
+        [data-theme="light"] .content {
+            background: #fdf6f0 !important;
+            color: #1e1c18 !important;
+        }
+        
+        [data-theme="light"] .topbar h1,
+        [data-theme="light"] .topbar p,
+        [data-theme="light"] .section-title,
+        [data-theme="light"] h1,
+        [data-theme="light"] h2,
+        [data-theme="light"] h3 {
+            color: #1e1c18 !important;
+        }
+        
+        [data-theme="light"] .stat-value {
+            color: var(--gold-light) !important;
+        }
+        
+        [data-theme="light"] .stat-label {
+            color: rgba(255,255,255,0.8) !important;
+        }
+        
+        [data-theme="light"] .upload-card,
+        [data-theme="light"] .pw-section,
+        [data-theme="light"] .books-table,
+        [data-theme="light"] .books-section {
+            background: #ffffff !important;
+            border-color: #d8d2c4 !important;
+            color: #1e1c18 !important;
+        }
+        
+        [data-theme="light"] .upload-card h3,
+        [data-theme="light"] .pw-section h3 {
+            color: #1e1c18 !important;
+        }
+        
+        [data-theme="light"] .form-group label {
+            color: #6b6457 !important;
+        }
+        
+        [data-theme="light"] .form-group input,
+        [data-theme="light"] .form-group select {
+            background: #f5f2eb !important;
+            border-color: #d8d2c4 !important;
+            color: #1e1c18 !important;
+        }
+        
+        [data-theme="light"] table th { color: #6b6457 !important; }
+        [data-theme="light"] table td { color: #1e1c18 !important; }
+        [data-theme="light"] .nav-label { color: rgba(255,255,255,0.6) !important; }
+
+        .sidebar {
+            background: #5c1a1a !important;
+            border-right: 1px solid #8b3333 !important;
+        }
+        
+        [data-theme="light"] .sidebar {
+            background: #7a1f1f !important;
+            border-right: 1px solid #a33030 !important;
+        }
+        
+        .sidebar-logo h2,
+        .sidebar-logo p { color: #f5ece4 !important; }
+        
+        [data-theme="light"] .sidebar-logo h2,
+        [data-theme="light"] .sidebar-logo p { color: #f5ece4 !important; }
+        
+        .sidebar .nav-item { color: #d4b8a8 !important; }
+        .sidebar .nav-item:hover { background: rgba(255,255,255,0.1) !important; color: #fff !important; }
+        .sidebar .nav-item.active { background: rgba(201,168,76,0.25) !important; color: var(--gold-light) !important; }
+        .sidebar .nav-label { color: rgba(255,255,255,0.5) !important; }
+        .sidebar .logout-btn { color: #ff8a8a !important; }
+        .sidebar .logout-btn:hover { background: rgba(255,255,255,0.1) !important; }
+        
+        [data-theme="light"] .sidebar .nav-item { color: #f0d0c0 !important; }
+        [data-theme="light"] .sidebar .nav-item:hover { background: rgba(255,255,255,0.15) !important; color: #fff !important; }
+        [data-theme="light"] .sidebar .nav-item.active { background: rgba(201,168,76,0.3) !important; color: #e8c97a !important; }
+
+        .stat-card {
+            background: #6e2020 !important;
+            border: 1px solid #8b3333 !important;
+        }
+        
+        [data-theme="light"] .stat-card {
+            background: #7a1f1f !important;
+            border: 1px solid #a33030 !important;
+        }
+        
+        .stat-card .stat-label { color: rgba(255,255,255,0.7) !important; }
+        .stat-card .stat-icon { filter: brightness(1.2); }
+        
+        [data-theme="light"] .stat-card .stat-label { color: rgba(255,255,255,0.75) !important; }
+        [data-theme="light"] .stat-card .stat-value { color: #e8c97a !important; }
+
+        .topnav {
+            background: #5c1a1a !important;
+            border-bottom: 1px solid #8b3333 !important;
+        }
+        [data-theme="light"] .topnav {
+            background: #7a1f1f !important;
+            border-bottom: 1px solid #a33030 !important;
+        }
+        .topnav .back-btn { color: rgba(255,255,255,0.8) !important; }
+        .topnav .back-btn:hover { color: #fff !important; }
+        .topnav .book-info h2 { color: #fff !important; }
+        .topnav .book-info p  { color: rgba(255,255,255,0.6) !important; }
+        .topnav .btn-nav { color: rgba(255,255,255,0.85) !important; border-color: rgba(255,255,255,0.2) !important; }
+        .topnav .btn-nav:hover { border-color: var(--gold) !important; color: var(--gold) !important; }
     </style>
 </head>
 <body>
-<nav class="topnav">
-    <div class="topnav-left">
-        <a href="/library" class="back-btn">← Back</a>
-        <div style="width:1px;height:18px;background:var(--border);"></div>
-        <div class="book-info">
-            <h2>{{ book[1] }}</h2>
-            <p>{{ book[3] or 'General' }} • {{ book[4] }} pages</p>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+    <div class="sidebar-logo">
+        <div class="logo-icon">📚</div>
+        <h2>ScholarAI</h2>
+        <p>Reading Intelligence</p>
+    </div>
+
+    <nav class="sidebar-nav">
+        <span class="nav-label">Main</span>
+        <a href="/" class="nav-item"><span class="icon">🏠</span> Dashboard</a>
+        <a href="/library" class="nav-item"><span class="icon">📖</span> Library</a>
+
+        <span class="nav-label">This Book</span>
+        <a href="/reader/{{ book[0] }}" class="nav-item active"><span class="icon">📄</span> Read</a>
+        <a href="/summary/{{ book[0] }}" class="nav-item"><span class="icon">📋</span> Summary</a>
+        <a href="/quiz/{{ book[0] }}" class="nav-item"><span class="icon">❓</span> Quiz</a>
+        <a href="/notes/{{ book[0] }}" class="nav-item"><span class="icon">📝</span> Notes</a>
+        <a href="/search/{{ book[0] }}" class="nav-item"><span class="icon">🔍</span> Search</a>
+        <a href="/progress/{{ book[0] }}" class="nav-item"><span class="icon">📊</span> Progress</a>
+    </nav>
+
+    <div class="sidebar-footer">
+        <button class="theme-toggle" id="themeBtn" onclick="toggleTheme()" title="Toggle theme">☀️</button>
+        <a href="/logout" class="logout-btn"><span>🚪</span> Logout</a>
+    </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+    <!-- TOP BAR -->
+    <div class="topbar">
+        <div class="topbar-left">
+            <a href="/library" class="back-btn">← Back</a>
+            <div class="book-info">
+                <h1>{{ book[1] }}</h1>
+                <p>{{ book[3] or 'General' }} · {{ total_pages }} pages</p>
+            </div>
+        </div>
+        <div class="topbar-actions">
+            <a href="/summary/{{ book[0] }}" class="btn-sm btn-green">📋 Summary</a>
+            <a href="/quiz/{{ book[0] }}" class="btn-sm btn-blue">❓ Quiz</a>
+            <a href="/search/{{ book[0] }}" class="btn-sm btn-gold">🔍 Search</a>
         </div>
     </div>
-    <div class="topnav-right">
-        <a href="/summary/{{ book[0] }}" class="btn-nav">📋 Summary</a>
-        <button class="btn-nav" id="chatToggleBtn" onclick="toggleChat()">💬 Chat</button>
-        <button class="btn-nav" onclick="toggleTheme()" id="themeBtn">☀️</button>
+
+    <!-- PROGRESS -->
+    <div class="progress-bar-wrap">
+        <div class="progress-bar-fill" id="progressFill" style="width: 0%"></div>
     </div>
-</nav>
 
-<div class="reader-layout">
-    <!-- LEFT: Page list -->
-    <aside class="page-sidebar">
-        <div class="sidebar-title">Pages</div>
-        {% for i in range(1, total_pages + 1) %}
-        <div class="page-item {% if i == last_page %}active{% endif %}" onclick="loadPage({{ i }})" id="page-item-{{ i }}">
-            <span class="pg-num">{{ i }}</span> Page {{ i }}
-        </div>
-        {% endfor %}
-    </aside>
-
-    <!-- CENTER: Reader -->
-    <div class="reader-main">
-        <div class="page-controls">
-            <div style="display:flex;gap:8px;">
-                <button class="ctrl-btn" id="prevBtn" onclick="prevPage()">← Prev</button>
-                <button class="ctrl-btn" id="nextBtn" onclick="nextPage()">Next →</button>
-            </div>
-            <div class="page-indicator">
-                Page <input type="number" id="pageInput" min="1" max="{{ total_pages }}" value="{{ last_page }}" onchange="loadPage(parseInt(this.value))">
-                of <strong>{{ total_pages }}</strong>
-            </div>
-            <span id="progressText" style="font-size:12px;color:var(--text-muted);">0%</span>
-        </div>
-        <div class="progress-wrap">
-            <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
-        </div>
-        <div class="content-area">
-            <div class="page-content">
-                <div id="pageDisplay">
-                    <div class="loading-state"><div class="spinner"></div><span>Loading...</span></div>
+    <!-- READER LAYOUT -->
+    <div class="reader-layout">
+        <!-- PAGE AREA -->
+        <div class="page-area">
+            <div class="page-content-wrap">
+                <div class="page-content" id="pageContent">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>Loading page...</p>
+                    </div>
                 </div>
             </div>
+
+            <!-- NAV BAR -->
+            <div class="nav-bar">
+                <button class="nav-btn" id="prevBtn" onclick="changePage(-1)">← Previous</button>
+
+                <div class="page-input-wrap">
+                    <span>Page</span>
+                    <input type="number" class="page-input" id="pageInput"
+                           min="1" max="{{ total_pages }}" value="1">
+                    <span>of {{ total_pages }}</span>
+                    <button class="btn-go" onclick="goToPage()">Go</button>
+                </div>
+
+                <button class="nav-btn" id="nextBtn" onclick="changePage(1)">Next →</button>
+            </div>
+        </div>
+
+        <!-- NOTES PANEL -->
+        <div class="notes-panel">
+            <div class="notes-panel-header">
+                <h3>📝 Quick Notes</h3>
+                <textarea class="note-input" id="noteInput" placeholder="Add a note for this page..."></textarea>
+                <button class="btn-save-note" onclick="saveNote()">Save Note</button>
+            </div>
+            <div class="notes-list" id="notesList">
+                {% if notes %}
+                    {% for note in notes %}
+                    <div class="note-item" id="note-{{ note[0] }}">
+                        <div class="note-item-meta">📄 Page {{ note[2] or '—' }}</div>
+                        <div class="note-item-text">{{ note[3] }}</div>
+                        <button class="btn-del-note" onclick="deleteNote({{ note[0] }})">🗑 Delete</button>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                <div class="notes-empty">No notes yet. Start reading and add notes!</div>
+                {% endif %}
+            </div>
         </div>
     </div>
+</main>
 
-    <!-- RIGHT: Chat Panel -->
-    <div class="chat-panel collapsed" id="chatPanel">
-        <div class="chat-header">
-            <div class="chat-header-top">
-                <div class="chat-title">🤖 <span>ReadAI Chat</span></div>
-                <button class="chat-close" onclick="toggleChat()" title="Close chat">✕</button>
-            </div>
-            <!-- Book selector -->
-            <div class="book-selector">
-                <label>Book</label>
-                <select id="chatBookSelect" onchange="onBookChange()">
-                    {% for b in all_books %}
-                    <option value="{{ b[0] }}" data-pages="{{ b[4] }}" {% if b[0] == book[0] %}selected{% endif %}>
-                        {{ b[1][:30] }}{% if b[1]|length > 30 %}…{% endif %}
-                    </option>
-                    {% endfor %}
-                </select>
-            </div>
-            <!-- Scope -->
-            <div class="scope-row">
-                <button class="scope-btn active" id="scopeCurrentBtn" onclick="setScope('current')">📄 Current Page</button>
-                <button class="scope-btn" id="scopeAllBtn" onclick="setScope('all')">📚 Full Book</button>
-            </div>
+<!-- Q&A FLOATING BUTTON -->
+<button class="qa-btn" onclick="document.getElementById('qaModal').classList.add('open')" title="Ask AI">🤖</button>
+
+<!-- Q&A MODAL -->
+<div class="modal-overlay" id="qaModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h3>🤖 Ask ScholarAI</h3>
+            <button class="modal-close" onclick="document.getElementById('qaModal').classList.remove('open')">✕</button>
         </div>
 
-        <div class="chat-messages" id="chatMessages">
-            <div class="chat-welcome">
-                <div class="wi">🤖</div>
-                <p>Ask me anything about the selected book. I'll answer based on the content!</p>
-            </div>
+        <div class="qa-range">
+            <span>Pages:</span>
+            <input type="number" id="qaFrom" placeholder="From" value="1" min="1" max="{{ total_pages }}">
+            <span>to</span>
+            <input type="number" id="qaTo" placeholder="To" value="1" min="1" max="{{ total_pages }}">
         </div>
 
-        <div class="chat-input-area">
-            <div class="chat-input-row">
-                <textarea id="chatInput" placeholder="Koi bhi sawaal poocho..." rows="1"
-                    onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
-                <button class="send-btn" id="sendBtn" onclick="sendMessage()" title="Send">➤</button>
-            </div>
-            <button class="clear-btn" onclick="clearChat()">🗑️ Clear chat</button>
-        </div>
+        <textarea class="qa-input" id="qaQuestion" placeholder="Ask anything about this book..."></textarea>
+        <button class="btn-ask" onclick="askQuestion()">Ask Question →</button>
+
+        <div class="qa-answer" id="qaAnswer"></div>
     </div>
 </div>
 
 <script>
-    const BOOK_ID = {{ book[0] }};
-    const TOTAL_PAGES = {{ total_pages }};
-    let currentPage = {{ last_page }};
-    let chatOpen = false;
-    let chatScope = 'current';   // 'current' | 'all'
-    let isSending = false;
+    const bookId = {{ book[0] }};
+    const totalPages = {{ total_pages }};
 
-    // ── READER ──────────────────────────────────────────
-    async function loadPage(pageNum) {
-        if (pageNum < 1 || pageNum > TOTAL_PAGES) return;
-        currentPage = pageNum;
-        document.getElementById('pageInput').value = pageNum;
-        document.getElementById('prevBtn').disabled = pageNum <= 1;
-        document.getElementById('nextBtn').disabled = pageNum >= TOTAL_PAGES;
-        const pct = Math.round((pageNum / TOTAL_PAGES) * 100);
+    // URL se page number check karo (search se aane par)
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlPage = parseInt(urlParams.get('page'));
+    let currentPage = (urlPage >= 1 && urlPage <= {{ total_pages }}) ? urlPage : {{ last_page }};
+
+    // Load page on init
+    loadPage(currentPage);
+
+    function loadPage(page) {
+        if (page < 1 || page > totalPages) return;
+        currentPage = page;
+
+        document.getElementById('pageInput').value = page;
+        document.getElementById('prevBtn').disabled = page <= 1;
+        document.getElementById('nextBtn').disabled = page >= totalPages;
+
+        // Update progress
+        const pct = Math.round((page / totalPages) * 100);
         document.getElementById('progressFill').style.width = pct + '%';
-        document.getElementById('progressText').textContent = pct + '%';
-        document.querySelectorAll('.page-item').forEach(el => el.classList.remove('active'));
-        const activeItem = document.getElementById('page-item-' + pageNum);
-        if (activeItem) { activeItem.classList.add('active'); activeItem.scrollIntoView({block:'nearest',behavior:'smooth'}); }
-        document.getElementById('pageDisplay').innerHTML = '<div class="loading-state"><div class="spinner"></div><span>Loading page ' + pageNum + '...</span></div>';
-        try {
-            const res = await fetch('/api/get-page', {
-                method: 'POST', headers: {'Content-Type':'application/json'},
-                body: JSON.stringify({book_id: BOOK_ID, page_number: pageNum})
-            });
-            const data = await res.json();
-            if (data.content) {
-                document.getElementById('pageDisplay').innerHTML =
-                    '<div class="page-header"><span class="page-badge">Page ' + pageNum + '</span><span style="font-size:12px;color:var(--text-muted);">of ' + TOTAL_PAGES + '</span></div>' +
-                    '<div class="page-text">' + escapeHtml(data.content) + '</div>';
-            } else {
-                document.getElementById('pageDisplay').innerHTML = '<div style="text-align:center;padding:60px;color:var(--text-muted);">⚠️ No content on this page.</div>';
+
+        // Update Q&A page range
+        document.getElementById('qaFrom').value = page;
+        document.getElementById('qaTo').value = page;
+
+        // Show loading
+        document.getElementById('pageContent').innerHTML = `
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>Loading page ${page}...</p>
+            </div>`;
+
+        fetch('/api/get-page', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ book_id: bookId, page_number: page })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.error) {
+                document.getElementById('pageContent').innerHTML = `
+                    <div class="page-empty">
+                        <div class="icon">⚠️</div>
+                        <p>${data.error}</p>
+                    </div>`;
+                return;
             }
-        } catch(e) {
-            document.getElementById('pageDisplay').innerHTML = '<div style="text-align:center;padding:60px;color:var(--error);">❌ Error loading page.</div>';
-        }
+            const content = data.content || '';
+            document.getElementById('pageContent').innerHTML = `
+                <div class="page-header">
+                    <span class="page-number-badge">Page ${page}</span>
+                    <span class="page-of">of ${totalPages} pages</span>
+                </div>
+                <div class="page-text">${content || '<i style="color:var(--text-muted)">This page appears to be empty or has no extractable text.</i>'}</div>`;
+        })
+        .catch(() => {
+            document.getElementById('pageContent').innerHTML = `
+                <div class="page-empty">
+                    <div class="icon">❌</div>
+                    <p>Failed to load page. Please try again.</p>
+                </div>`;
+        });
     }
 
-    function prevPage() { loadPage(currentPage - 1); }
-    function nextPage() { loadPage(currentPage + 1); }
-
-    // ── CHAT TOGGLE ─────────────────────────────────────
-    function toggleChat() {
-        chatOpen = !chatOpen;
-        const panel = document.getElementById('chatPanel');
-        const btn = document.getElementById('chatToggleBtn');
-        panel.classList.toggle('collapsed', !chatOpen);
-        btn.classList.toggle('active-chat', chatOpen);
-        if (chatOpen) {
-            setTimeout(() => document.getElementById('chatInput').focus(), 350);
-        }
+    function changePage(delta) {
+        const newPage = currentPage + delta;
+        if (newPage >= 1 && newPage <= totalPages) loadPage(newPage);
     }
 
-    // ── BOOK CHANGE ─────────────────────────────────────
-    function onBookChange() {
-        // Reset conversation context hint in welcome (don't wipe messages)
-        const sel = document.getElementById('chatBookSelect');
-        const bookName = sel.options[sel.selectedIndex].text;
-        addSystemMsg('📚 Book changed to: ' + bookName);
+    function goToPage() {
+        const val = parseInt(document.getElementById('pageInput').value);
+        if (val >= 1 && val <= totalPages) loadPage(val);
     }
 
-    // ── SCOPE ────────────────────────────────────────────
-    function setScope(s) {
-        chatScope = s;
-        document.getElementById('scopeCurrentBtn').classList.toggle('active', s === 'current');
-        document.getElementById('scopeAllBtn').classList.toggle('active', s === 'all');
-    }
-
-    // ── SEND MESSAGE ─────────────────────────────────────
-    async function sendMessage() {
-        if (isSending) return;
-        const input = document.getElementById('chatInput');
-        const q = input.value.trim();
-        if (!q) return;
-
-        input.value = '';
-        autoResize(input);
-
-        const sel = document.getElementById('chatBookSelect');
-        const selectedBookId = parseInt(sel.value);
-        const selectedBookPages = parseInt(sel.options[sel.selectedIndex].getAttribute('data-pages'));
-        const bookName = sel.options[sel.selectedIndex].text;
-
-        // Determine page range
-        let pageFrom, pageTo;
-        if (chatScope === 'current') {
-            pageFrom = currentPage;
-            pageTo = currentPage;
-        } else {
-            pageFrom = 1;
-            pageTo = selectedBookPages;
-        }
-
-        // Add user message
-        addMsg('user', q);
-
-        // Show typing
-        const typingId = addTyping();
-        isSending = true;
-        document.getElementById('sendBtn').disabled = true;
-
-        try {
-            const res = await fetch('/api/ask', {
-                method: 'POST',
-                headers: {'Content-Type':'application/json'},
-                body: JSON.stringify({
-                    book_id: selectedBookId,
-                    page_from: pageFrom,
-                    page_to: pageTo,
-                    question: q
-                })
-            });
-            const data = await res.json();
-            removeTyping(typingId);
-            addMsg('ai', data.answer || '❌ No answer.', bookName, chatScope === 'current' ? 'Page ' + currentPage : 'Full Book');
-        } catch(e) {
-            removeTyping(typingId);
-            addMsg('ai', '❌ Connection error. Please try again.');
-        }
-
-        isSending = false;
-        document.getElementById('sendBtn').disabled = false;
-        input.focus();
-    }
-
-    // ── MESSAGE HELPERS ──────────────────────────────────
-    function addMsg(role, text, bookName, scopeLabel) {
-        const container = document.getElementById('chatMessages');
-        // Remove welcome if present
-        const welcome = container.querySelector('.chat-welcome');
-        if (welcome) welcome.remove();
-
-        const div = document.createElement('div');
-        div.className = 'msg msg-' + role;
-
-        const now = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-        let metaHtml = '<div class="msg-meta">' + now + '</div>';
-        if (role === 'ai' && bookName) {
-            metaHtml = '<div class="msg-book-tag">📖 ' + bookName + ' · ' + scopeLabel + '</div>' + metaHtml;
-        }
-
-        div.innerHTML = '<div class="msg-bubble">' + escapeHtml(text) + '</div>' + metaHtml;
-        container.appendChild(div);
-        div.scrollIntoView({block:'end', behavior:'smooth'});
-    }
-
-    function addSystemMsg(text) {
-        const container = document.getElementById('chatMessages');
-        const div = document.createElement('div');
-        div.style.cssText = 'text-align:center;font-size:11px;color:var(--text-muted);padding:4px 0;';
-        div.textContent = text;
-        container.appendChild(div);
-        div.scrollIntoView({block:'end', behavior:'smooth'});
-    }
-
-    let typingCounter = 0;
-    function addTyping() {
-        const container = document.getElementById('chatMessages');
-        const id = 'typing-' + (++typingCounter);
-        const div = document.createElement('div');
-        div.className = 'msg msg-ai';
-        div.id = id;
-        div.innerHTML = '<div class="typing-bubble"><span></span><span></span><span></span></div>';
-        container.appendChild(div);
-        div.scrollIntoView({block:'end', behavior:'smooth'});
-        return id;
-    }
-
-    function removeTyping(id) {
-        const el = document.getElementById(id);
-        if (el) el.remove();
-    }
-
-    function clearChat() {
-        const container = document.getElementById('chatMessages');
-        container.innerHTML = '<div class="chat-welcome"><div class="wi">🤖</div><p>Ask me anything about the selected book. I\'ll answer based on the content!</p></div>';
-    }
-
-    // ── INPUT HELPERS ────────────────────────────────────
-    function handleKey(e) {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            sendMessage();
-        }
-    }
-
-    function autoResize(el) {
-        el.style.height = 'auto';
-        el.style.height = Math.min(el.scrollHeight, 100) + 'px';
-    }
-
-    function escapeHtml(t) {
-        return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    }
-
-    // ── KEYBOARD SHORTCUTS ───────────────────────────────
+    // Keyboard navigation
     document.addEventListener('keydown', e => {
-        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-        if (e.key === 'ArrowLeft') prevPage();
-        if (e.key === 'ArrowRight') nextPage();
-        if (e.key === 'c') toggleChat();
+        if (document.getElementById('qaModal').classList.contains('open')) return;
+        if (e.key === 'ArrowRight' || e.key === 'ArrowDown') changePage(1);
+        if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') changePage(-1);
     });
 
-    // ── THEME ────────────────────────────────────────────
+    // Save Note
+    function saveNote() {
+        const text = document.getElementById('noteInput').value.trim();
+        if (!text) return;
+
+        fetch('/api/add-note', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ book_id: bookId, page_number: currentPage, note_text: text })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.status === 'ok') {
+                document.getElementById('noteInput').value = '';
+                const list = document.getElementById('notesList');
+                const emptyMsg = list.querySelector('.notes-empty');
+                if (emptyMsg) emptyMsg.remove();
+
+                // Note ID backend se wapas nahi aata, page reload se sahi IDs milenge
+                // Temporary display ke liye card add karo
+                const div = document.createElement('div');
+                div.className = 'note-item';
+                div.dataset.temp = 'true';
+                div.innerHTML = `
+                    <div class="note-item-meta">📄 Page ${currentPage}</div>
+                    <div class="note-item-text">${text}</div>
+                    <button class="btn-del-note" onclick="this.closest('.note-item').remove()">🗑 Delete (reload for sync)</button>`;
+                list.prepend(div);
+            }
+        });
+    }
+
+    function deleteNote(noteId) {
+        fetch('/api/delete-note/' + noteId, { method: 'POST' })
+        .then(r => r.json())
+        .then(() => {
+            const el = document.getElementById('note-' + noteId);
+            if (el) el.remove();
+        });
+    }
+
+    // Ask Question
+    function askQuestion() {
+        const question = document.getElementById('qaQuestion').value.trim();
+        const pageFrom = document.getElementById('qaFrom').value;
+        const pageTo = document.getElementById('qaTo').value;
+
+        if (!question) return;
+
+        const ansDiv = document.getElementById('qaAnswer');
+        ansDiv.style.display = 'block';
+        ansDiv.textContent = '🤔 Thinking...';
+
+        fetch('/api/ask', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                book_id: bookId,
+                page_from: pageFrom,
+                page_to: pageTo,
+                question: question
+            })
+        })
+        .then(r => r.json())
+        .then(data => {
+            ansDiv.textContent = data.answer || data.error || 'No answer.';
+        })
+        .catch(() => {
+            ansDiv.textContent = '❌ Request failed. Please try again.';
+        });
+    }
+
+    // Enter to submit Q&A
+    document.getElementById('qaQuestion').addEventListener('keydown', e => {
+        if (e.key === 'Enter' && e.ctrlKey) askQuestion();
+    });
+</script>
+
+<script>
     function toggleTheme() {
         const cur = document.documentElement.getAttribute('data-theme');
         const nxt = cur === 'dark' ? 'light' : 'dark';
         document.documentElement.setAttribute('data-theme', nxt);
-        localStorage.setItem('readai_theme', nxt);
-        document.getElementById('themeBtn').textContent = nxt === 'dark' ? '☀️' : '🌙';
+        localStorage.setItem('scholarai_theme', nxt);
+        const btn = document.getElementById('themeBtn');
+        if (btn) btn.textContent = nxt === 'dark' ? '☀️' : '🌙';
     }
-
     document.addEventListener('DOMContentLoaded', () => {
-        const t = localStorage.getItem('readai_theme') || 'dark';
-        document.getElementById('themeBtn').textContent = t === 'dark' ? '☀️' : '🌙';
+        const t = localStorage.getItem('scholarai_theme') || 'dark';
+        const btn = document.getElementById('themeBtn');
+        if (btn) btn.textContent = t === 'dark' ? '☀️' : '🌙';
     });
-
-    loadPage(currentPage);
 </script>
 </body>
 </html>
